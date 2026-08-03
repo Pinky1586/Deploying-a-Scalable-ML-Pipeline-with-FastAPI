@@ -2,6 +2,9 @@ import os
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import KFold, cross_val_score
 
 from ml.data import process_data
 from ml.model import (
@@ -13,14 +16,12 @@ from ml.model import (
     train_model,
 )
 # TODO: load the cencus.csv data
-project_path = "Your path here"
+project_path = "."
 data_path = os.path.join(project_path, "data", "census.csv")
 print(data_path)
-data = None # your code here
+data = pd.read_csv(data_path)
 
-# TODO: split the provided data to have a train dataset and a test dataset
-# Optional enhancement, use K-fold cross validation instead of a train-test split.
-train, test = None, None# Your code here
+#Implementing data split and k-fold cross validation
 
 # DO NOT MODIFY
 cat_features = [
@@ -34,15 +35,34 @@ cat_features = [
     "native-country",
 ]
 
-# TODO: use the process_data function provided to process the data.
-X_train, y_train, encoder, lb = process_data(
-    # your code here
-    # use the train dataset 
-    # use training=True
-    # do not need to pass encoder and lb as input
-    )
+# 1. Load your dataset
+train, test = train_test_split(data, test_size=0.2, random_state=42)
 
-X_test, y_test, _, _ = process_data(
+# 2. Initialize the machine learning model
+model = LogisticRegression(max_iter=200)
+
+# 3. Define the K-Fold strategy (e.g., 5 folds)
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+# 4. Run cross-validation
+# You can pass the KFold object directly into the cv parameter
+scores = cross_val_score(model, X_train, y_train, cv=kf, scoring='accuracy')
+
+# 5. Output results
+print(f"Scores for each fold: {scores}")
+print(f"Mean Accuracy: {np.mean(scores):.2f}")
+print(f"Standard Deviation: {np.std(scores):.2f}")
+
+
+# Processing data
+X_train, y_train, encoder, lb = process_data(
+    train, 
+    categorical_features=cat_features, 
+    label="salary", 
+    training=True,
+)
+
+X_test, y_test, encoder, lb = process_data(
     test,
     categorical_features=cat_features,
     label="salary",
