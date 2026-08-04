@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import pytest
+import pandas as pd
+from ml.data import process_data
 from sklearn.linear_model import LogisticRegression
 from ml.model import (
     train_model, 
@@ -14,7 +16,7 @@ def test_train_model():
     """
     Test the model training function to ensure the training pipeline works properly.
     """
-    data_path = "data/clean_census.csv" 
+    data_path = "data/census.csv"  # Updated to match your file
     data = pd.read_csv(data_path)
     
     cat_features = [
