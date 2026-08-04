@@ -1,28 +1,56 @@
+import os
+import numpy as np
 import pytest
-# TODO: add necessary import
+from sklearn.linear_model import LogisticRegression
 
-# TODO: implement the first test. Change the function name and input as needed
-def test_one():
+from ml.model import compute_model_metrics, inference, load_model, save_model
+
+def test_compute_model_metrics():
     """
-    # add description for the first test
+    Test that compute_model_metrics correctly calculates precision, 
+    recall, and F-beta score, returning floats within [0, 1].
     """
-    # Your code here
-    pass
+    y_true = np.array([1, 1, 0, 0])
+    preds = np.array([1, 0, 0, 0])
+
+    precision, recall, fbeta = compute_model_metrics(y_true, preds)
+
+    assert isinstance(precision, float)
+    assert isinstance(recall, float)
+    assert isinstance(fbeta, float)
+
+    assert precision == 1.0
+    assert recall == 0.5
 
 
-# TODO: implement the second test. Change the function name and input as needed
-def test_two():
+def test_inference():
     """
-    # add description for the second test
+    Checks that the predictions return an array with the same number of items as rows in X.
     """
-    # Your code here
-    pass
+    X = np.array([[1, 2], [3, 4]])
+    
+    # 1. Store the trained model
+    model = LogisticRegression().fit(X, [0, 1])
+
+    # 2. Store the predictions returned by inference
+    preds = inference(model, X)
+
+    # 3. Assert correct length
+    assert len(preds) == len(X)
 
 
-# TODO: implement the third test. Change the function name and input as needed
-def test_three():
+def test_save_model_and_load_model(tmp_path):
     """
-    # add description for the third test
+    Checks that the loaded object is not None and has the expected type or attributes.
     """
-    # Your code here
-    pass
+    dummy_model = LogisticRegression()
+    dummy_model.fit([[1, 2], [3, 4]], [0, 1])
+
+    file_path = str(tmp_path / "test_model.pkl")
+
+    save_model(dummy_model, file_path)
+    loaded_model = load_model(file_path)
+
+    assert os.path.exists(file_path)
+    assert loaded_model is not None
+    assert type(loaded_model) == type(dummy_model)

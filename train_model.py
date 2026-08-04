@@ -101,7 +101,7 @@ for col in cat_features:
         count = test[test[col] == slicevalue].shape[0]
         p, r, fb = performance_on_categorical_slice(
             data=test, 
-            column_nam=col, 
+            column_name=col, 
             slice_value=slicevalue, 
             categorical_features=cat_features, 
             label="salary", 
@@ -111,4 +111,4 @@ for col in cat_features:
         )
         with open("slice_output.txt", "a") as f:
             print(f"{col}: {slicevalue}, Count: {count:,}", file=f)
-            print(f"Precision: {p:.4f} | Recall: {r:.4f} git status| F1: {fb:.4f}", file=f)
+            print(f"Precision: {p:.4f} | Recall: {r:.4f} | F1: {fb:.4f}", file=f)
