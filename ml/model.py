@@ -126,7 +126,7 @@ def performance_on_categorical_slice(
     """
     X_slice, y_slice, encoder, lb = process_data(
         data[data[column_name] == slice_value],
-        categorical_features=cat_features,
+        categorical_features=categorical_features,
         label=label,
         training=False,
         encoder=encoder,

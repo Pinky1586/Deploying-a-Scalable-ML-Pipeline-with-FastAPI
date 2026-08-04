@@ -36,26 +36,27 @@ cat_features = [
     "native-country",
 ]
 
-# 1. Load your dataset
+# 1. Load census.csv data
+project_path = "."
+data_path = os.path.join(project_path, "data", "census.csv")
+print(f"Loading data from: {data_path}")
+data = pd.read_csv(data_path)
+
+cat_features = [
+    "workclass",
+    "education",
+    "marital-status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native-country",
+]
+
+# 2. Train/Test split
 train, test = train_test_split(data, test_size=0.2, random_state=42)
 
-# 2. Initialize the machine learning model
-model = LogisticRegression(max_iter=200)
-
-# 3. Define the K-Fold strategy (e.g., 5 folds)
-kf = KFold(n_splits=5, shuffle=True, random_state=42)
-
-# 4. Run cross-validation
-# You can pass the KFold object directly into the cv parameter
-scores = cross_val_score(model, X_train, y_train, cv=kf, scoring='accuracy')
-
-# 5. Output results
-print(f"Scores for each fold: {scores}")
-print(f"Mean Accuracy: {np.mean(scores):.2f}")
-print(f"Standard Deviation: {np.std(scores):.2f}")
-
-
-# Processing data
+# 3. Process training data (Creates X_train, y_train, fitted encoder, and lb)
 X_train, y_train, encoder, lb = process_data(
     train, 
     categorical_features=cat_features, 
@@ -63,7 +64,8 @@ X_train, y_train, encoder, lb = process_data(
     training=True,
 )
 
-X_test, y_test, encoder, lb = process_data(
+# 4. Process test data (Reuses fitted encoder and lb)
+X_test, y_test, _, _ = process_data(
     test,
     categorical_features=cat_features,
     label="salary",
@@ -72,43 +74,43 @@ X_test, y_test, encoder, lb = process_data(
     lb=lb,
 )
 
-#use the train_model function to train the model on the training dataset
+# 5. Train model on processed training data
 model = train_model(X_train, y_train)
 
-# save the model and the encoder
-model_path = os.path.join(project_path, "model", "model.pkl")
+# 6. Save model and encoder artifacts
+model_dir = os.path.join(project_path, "model")
+os.makedirs(model_dir, exist_ok=True)
+
+model_path = os.path.join(model_dir, "model.pkl")
+encoder_path = os.path.join(model_dir, "encoder.pkl")
 save_model(model, model_path)
-encoder_path = os.path.join(project_path, "model", "encoder.pkl")
 save_model(encoder, encoder_path)
 
-# load the model
-model = load_model(
-    model_path
-) 
+# 7. Load model back to verify artifact persistence
+model = load_model(model_path)
 
-# use the inference function to run the model inferences on the test dataset.
+# 8. Run inference and evaluate overall test set performance
 preds = inference(model, X_test)
-
-# Calculate and print the metrics
 p, r, fb = compute_model_metrics(y_test, preds)
-print(f"Precision: {p:.4f} | Recall: {r:.4f} | F1: {fb:.4f}")
+print(f"Overall Metrics -> Precision: {p:.4f} | Recall: {r:.4f} | F1: {fb:.4f}")
 
-# compute the performance on model slices using the performance_on_categorical_slice function
-# iterate through the categorical features
-for col in cat_features:
-    # iterate through the unique values in one categorical feature
-    for slicevalue in sorted(test[col].unique()):
-        count = test[test[col] == slicevalue].shape[0]
-        p, r, fb = performance_on_categorical_slice(
-            data=test, 
-            column_name=col, 
-            slice_value=slicevalue, 
-            categorical_features=cat_features, 
-            label="salary", 
-            encoder=encoder, 
-            lb=lb, 
-            model=model
-        )
-        with open("slice_output.txt", "a") as f:
-            print(f"{col}: {slicevalue}, Count: {count:,}", file=f)
-            print(f"Precision: {p:.4f} | Recall: {r:.4f} | F1: {fb:.4f}", file=f)
+# 9. Compute slice metrics and save output cleanly to slice_output.txt
+slice_file_path = os.path.join(project_path, "slice_output.txt")
+with open(slice_file_path, "w") as f:
+    for col in cat_features:
+        for slicevalue in sorted(test[col].unique()):
+            count = test[test[col] == slicevalue].shape[0]
+            p_slice, r_slice, f1_slice = performance_on_categorical_slice(
+                data=test, 
+                column_name=col, 
+                slice_value=slicevalue, 
+                categorical_features=cat_features, 
+                label="salary", 
+                encoder=encoder, 
+                lb=lb, 
+                model=model
+            )
+            f.write(f"{col}: {slicevalue}, Count: {count:,}\n")
+            f.write(f"Precision: {p_slice:.4f} | Recall: {r_slice:.4f} | F1: {f1_slice:.4f}\n\n")
+
+print(f"Slice performance successfully written to {slice_file_path}")
