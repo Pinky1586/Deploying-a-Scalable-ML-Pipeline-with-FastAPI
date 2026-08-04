@@ -2,8 +2,32 @@ import os
 import numpy as np
 import pytest
 from sklearn.linear_model import LogisticRegression
+from ml.model import (
+    train_model, 
+    compute_model_metrics, 
+    inference, 
+    load_model, 
+    save_model
+)
 
-from ml.model import compute_model_metrics, inference, load_model, save_model
+def test_train_model():
+    """
+    Test the model training function to ensure the training pipeline works properly.
+    """
+    data_path = "data/clean_census.csv" 
+    data = pd.read_csv(data_path)
+    
+    cat_features = [
+        "workclass", "education", "marital-status", "occupation",
+        "relationship", "race", "sex", "native-country"
+    ]
+    
+    X_train, y_train, encoder, lb = process_data(
+        data, categorical_features=cat_features, label="salary", training=True
+    )
+    
+    model = train_model(X_train, y_train)
+    assert model is not None
 
 def test_compute_model_metrics():
     """
